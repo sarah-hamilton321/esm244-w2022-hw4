@@ -1,0 +1,98 @@
+---
+title: 'Spatial Analysis of California Oil Spills'
+author: "Sarah Hamilton"
+date: "3/6/2022"
+output:
+  html_document:
+    code_folding: hide
+    theme: yeti
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    collapsed: yes
+    smooth_scroll: yes
+    number_sections: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# Introduction
+
+The following code analyzes the frequency of inland oil spills in California in 2008. It uses spatial data of the California counties combined with spatial data of oil spill locations to visualize where oil spills occur most frequently. 
+
+```{r setup, include=TRUE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(spatstat)
+library(maptools)
+library(raster)
+library(tidyverse)
+library(here)
+library(sf)
+library(tmap)
+```
+
+# Exploratory Analysis of Oil Spills
+
+```{r}
+# read in the data
+spills <- read_sf(dsn = here("data"),
+                  layer = "Oil_Spill_Incident_Tracking_[ds394]") %>%
+  janitor::clean_names() %>%
+  st_transform(crs = 32610)
+
+county <- read_sf(dsn = here("data"),
+                  layer = "california_county_shape_file") %>%
+  janitor::clean_names() %>%
+  select(name) %>%
+  st_set_crs(4326) %>%
+  st_transform(crs = 32610)
+
+# exploratory plot 
+# plot(spills)
+
+```
+
+```{r}
+# plot in tmap
+tmap_mode("view")
+
+tm_shape(county) +
+  tm_polygons(alpha = 0) +
+  tm_shape(spills) +
+  tm_dots(col = "darkorchid")
+  # tm_raster(midpoint = NA,
+  #           palette = "Blues",
+  #           legend.show = FALSE)
+```
+
+# Oil Spills by County
+
+```{r}
+
+# plot oil spills over counties
+county_spills <- spills %>%
+  group_by(localecoun) %>%
+  summarize(total_spills = n(), na.rm = TRUE)
+
+# merge county data with oil spill data
+county_spills_density <- county %>%
+  st_join(county_spills)
+
+# plot data 
+ggplot(data = county_spills_density) +
+  geom_sf(aes(fill = total_spills),
+          color = 'white', size = 0.1) +
+  theme_minimal() +
+  scale_fill_gradientn(colors = c("light blue", "dark blue")) +
+  labs(title = "Inland Oil Spills by County in 2008",
+       fill = "Number of Oil Spills")
+```
+
+
+DELETE: DO THIS IF YOU HAVE TIME: Challenge yourself (OPTIONAL): perform a point pattern analysis to assess whether oil spills tend to be more clustered or more uniform than complete spatial randomness. Plot the G function (here, units are in degrees lat-long, use that to help decide on the r) and include a brief interpretation of the results.
+
+
+Data Citation: Oil Spill Incident Tracking [ds394]. 2020. California State Geoportal. https://gis.data.ca.gov/datasets/7464e3d6f4924b50ad06e5a553d71086_0/explore?location=36.752463%2C-119.422009%2C6.00&showTable=true.
+
+

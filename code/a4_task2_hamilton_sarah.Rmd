@@ -1,0 +1,99 @@
+---
+title: "Time Series Analysis of the Willamette Falls Fish Passage"
+author: "Sarah Hamilton"
+date: "3/6/2022"
+output:
+  html_document:
+    code_folding: hide
+    theme: yeti
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    collapsed: yes
+    smooth_scroll: yes
+    number_sections: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# Introduction
+
+The Willamette River Fish Ladder is used to count the number of fish that pass through the river. 
+
+![Photo of the Willamette River Fish Ladder.](fish_ladder.jpg)
+
+*Image Source: Fish ladder on Willamette River.jpg - Wikimedia Commons. 2020. https://commons.wikimedia.org/wiki/File:Fish_ladder_on_Willamette_River.jpg.*
+
+The following code analyzes this fish passage data over time... ADD INFO HEREEEEEEE
+
+![Map of data collection locations used in the Columbia River Data Access in Real Time (DART) database.](dartmap.jpg)
+
+*Image Source: DART Map of Columbia Basin Data Collection Locations | Columbia Basin Research. 2022. http://www.cbr.washington.edu/dart/dartmap/.*
+
+Data Source: DART Adult Passage Graphics & Text | Columbia Basin Research. 2022. http://www.cbr.washington.edu/dart/query/adult_graph_text.
+
+```{r setup, include=TRUE, warning = FALSE, message = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(here)
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(feasts)
+library(slider)
+library(plotly)
+
+# read in the data and replace NAs with 0s
+fish <- read_csv(here("data","willamette_fish_passage.csv")) %>%
+  mutate_all(~replace_na(.,0)) %>% 
+  janitor::clean_names()
+
+fish_ts <- fish %>%
+  mutate(date = lubridate::mdy(date)) %>% 
+  as_tsibble(key = NULL, index = date)
+```
+
+# Time Series Visualizations {.tabset}
+
+## Original Time Series
+
+DELETE: A finalized, static graph of adult passage for coho, jack coho, and steelhead salmon (you decide if these all occupy the same panel, or if they are in separate panels). Add a figure caption. Replace NA values with zero. 
+2 - 3 bullet points summarizing major patterns / notable trends in the salmon passage time series data
+
+```{r}
+ggplot(data = fish_ts, aes(x = date)) +
+  geom_line(aes(y = steelhead), color = "#80aaaa", alpha = 0.8) + #blue
+  geom_line(aes(y = coho), color = "#c15db2", alpha = 0.8) + #pink
+  geom_line(aes(y = jack_coho), color = "#ff9900", alpha = 0.8) + #orange
+  theme_minimal() +
+  labs(x = "Date", y = "Number of fish per day")
+  #scale_color_manual(name = "Species", values = c("Steelhead Salmon" = "#80aaaa", "Coho" = "#c15db2", "Jack Coho" = "#ff9900"), labels = c("Steelhead Salmon", "Coho", "Jack Coho"))
+
+### HOW TO GET LEGEND TO SHOW UP????
+```
+
+**Figure 1:** Time series of number of fish passing through the Willamette fish ladder per day over time. The color indicates the species of fish. 
+
+- any trends, seasonality, cyclicality???? any other patterns???
+
+## Visualization 2
+
+DELETE: A finalized seasonplot for each species (coho, jack coho, steelhead) in its own panel. You can either facet_wrap/facet_grid, or use patchwork or cowplot, to make the figure. Add a caption.
+Add 2 - 3 bullet points summarizing the major trends you see in the seasonplots.
+
+```{r}
+
+```
+
+
+## Visualizaiton 3
+
+DELETE: A finalized figure of annual totals for fish passage, for each of the 3 species (coho, jack coho, steelhead). You decide if this is in a single panel, or multiple panels. Add a figure caption. 
+Add 2 - 3 bullet points summarizing major trends you see in the annual totals by species from 2000 - 2010.
+
+```{r}
+
+```
+
+# Conclusion
+
