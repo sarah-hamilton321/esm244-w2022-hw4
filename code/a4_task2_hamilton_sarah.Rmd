@@ -43,6 +43,7 @@ library(feasts)
 library(slider)
 library(plotly)
 library(patchwork)
+library(paletteer)
 
 # read in the data and replace NAs with 0s
 fish <- read_csv(here("data","willamette_fish_passage.csv")) %>%
@@ -63,7 +64,7 @@ fish_ts <- fish %>%
 
 ## Original Time Series
 
-The following figure contains time series plots for fish passage through the Willamette River Fish Ladder for three fish species: steelhead, coho, and jack coho.
+The following figure contains time series plots for daily fish passage through the Willamette River Fish Ladder for three fish species: steelhead, coho, and jack coho.
 
 ```{r}
 steelhead_time <- ggplot(data = fish_ts, aes(x = date, y = steelhead)) +
@@ -105,7 +106,7 @@ steelhead_time/coho_time/jack_coho_time
 
 ## Season Plots
 
-The following figure contains season plots for fish passage through the Willamette River Fish Ladder for three fish species: steelhead, coho, and jack coho.
+The following figure contains season plots for daily fish passage through the Willamette River Fish Ladder for three fish species: steelhead, coho, and jack coho.
 
 ```{r}
 # monthly seasonplot
@@ -116,35 +117,29 @@ fish_month <- fish_ts %>%
             monthly_mean_jack_coho = mean(jack_coho, na.rm = TRUE))
 
 steelhead_season <- fish_month %>%
-  gg_season(y = monthly_mean_steelhead) +
+  gg_season(y = monthly_mean_steelhead, 
+            pal = paletteer_c(palette = "ggthemes::Blue", n = 10)) +
   labs(x = " ", y = "Steelhead") +
   theme_minimal() +
   theme(legend.position = "none") +
   theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank())
-  # scale_fill_manual(values = c("#000000","#000001","#000002","#000003","#000004",
-  #                              "#000005","#000006","#000007","#000008","#000009"))
-  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
+        axis.text.x=element_blank()) 
 
 coho_season <- fish_month %>%
-  gg_season(y = monthly_mean_coho) +
+  gg_season(y = monthly_mean_coho, 
+            pal = paletteer_c(palette = "ggthemes::Purple", n = 10)) +
   labs(x = " ", y = "Coho") +
   theme_minimal() +
   theme(legend.position = "none") +
   theme(axis.title.x=element_blank(),
         axis.text.x=element_blank())
-  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
 
 jack_coho_season <- fish_month %>%
-  gg_season(y = monthly_mean_jack_coho) +
+  gg_season(y = monthly_mean_jack_coho, 
+            pal = paletteer_c(palette = "ggthemes::Orange", n = 10)) +
   labs(x = "Month", y = "Jack Coho") +
   theme_minimal() +
   theme(legend.position = "bottom")
-  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
-
-# steelhead_final <- ggplotly(steelhead_season)
-# coho_final <- ggplotly(coho_season)
-# jack_coho_final <- ggplotly(jack_coho_season)
 
 steelhead_season/coho_season/jack_coho_season
 
