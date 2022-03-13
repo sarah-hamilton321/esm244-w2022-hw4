@@ -42,15 +42,21 @@ library(tsibble)
 library(feasts)
 library(slider)
 library(plotly)
+library(patchwork)
 
 # read in the data and replace NAs with 0s
 fish <- read_csv(here("data","willamette_fish_passage.csv")) %>%
   mutate_all(~replace_na(.,0)) %>% 
-  janitor::clean_names()
+  janitor::clean_names() 
+  # pivot_longer(cols = chinook_run:pink, names_to = "species") %>%
+  # filter(species %in% c("coho","jack_coho","steelhead")) 
 
 fish_ts <- fish %>%
   mutate(date = lubridate::mdy(date)) %>% 
   as_tsibble(key = NULL, index = date)
+  # group_by(species)
+
+
 ```
 
 # Time Series Visualizations {.tabset}
@@ -61,39 +67,135 @@ DELETE: A finalized, static graph of adult passage for coho, jack coho, and stee
 2 - 3 bullet points summarizing major patterns / notable trends in the salmon passage time series data
 
 ```{r}
-ggplot(data = fish_ts, aes(x = date)) +
-  geom_line(aes(y = steelhead), color = "#80aaaa", alpha = 0.8) + #blue
-  geom_line(aes(y = coho), color = "#c15db2", alpha = 0.8) + #pink
-  geom_line(aes(y = jack_coho), color = "#ff9900", alpha = 0.8) + #orange
-  theme_minimal() +
-  labs(x = "Date", y = "Number of fish per day")
-  #scale_color_manual(name = "Species", values = c("Steelhead Salmon" = "#80aaaa", "Coho" = "#c15db2", "Jack Coho" = "#ff9900"), labels = c("Steelhead Salmon", "Coho", "Jack Coho"))
+steelhead_time <- ggplot(data = fish_ts, aes(x = date, y = steelhead)) +
+                             geom_line(color = "#80aaaa", alpha = 0.8) +
+                             labs(x = " ", y = "Steelhead") +
+                             theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+
+coho_time <- ggplot(data = fish_ts, aes(x = date, y = coho)) +
+                             geom_line(color = "#c15db2", alpha = 0.8) +
+                             labs(x = " ", y = "Coho") +
+                             theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+
+jack_coho_time <- ggplot(data = fish_ts, aes(x = date, y = jack_coho)) +
+                             geom_line(color = "#ff9900", alpha = 0.8) +
+                             labs(x = "Date", y = "Jack Coho") +
+                             theme_minimal()
+
+steelhead_time/coho_time/jack_coho_time
+
+# ggplotly(ggplot(data = fish_ts, aes(x = date)) +
+#   geom_line(aes(y = steelhead), color = "#80aaaa", alpha = 0.8, ) + #blue
+#   geom_line(aes(y = coho), color = "#c15db2", alpha = 0.8) + #pink
+#   geom_line(aes(y = jack_coho), color = "#ff9900", alpha = 0.8) + #orange
+#   theme_minimal() +
+#   labs(x = "Date", y = "Number of fish per day"))
 
 ### HOW TO GET LEGEND TO SHOW UP????
 ```
 
-**Figure 1:** Time series of number of fish passing through the Willamette fish ladder per day over time. The color indicates the species of fish. 
+**Figure 1:** Time series of number of fish passing through the Willamette fish ladder per day over time. The color indicates the species of fish, with blue indicating steelhead, pink indicating coho, and orange indicating jack coho. 
 
-- any trends, seasonality, cyclicality???? any other patterns???
+- any trends, seasonality, cyclical???? any other patterns???
 
-## Visualization 2
+## Season Plots
 
 DELETE: A finalized seasonplot for each species (coho, jack coho, steelhead) in its own panel. You can either facet_wrap/facet_grid, or use patchwork or cowplot, to make the figure. Add a caption.
 Add 2 - 3 bullet points summarizing the major trends you see in the seasonplots.
 
 ```{r}
+# monthly seasonplot
+fish_month <- fish_ts %>%
+  index_by(yr_mo = ~yearmonth(.)) %>%
+  summarize(monthly_mean_steelhead = mean(steelhead, na.rm = TRUE),
+            monthly_mean_coho = mean(coho, na.rm = TRUE),
+            monthly_mean_jack_coho = mean(jack_coho, na.rm = TRUE))
+
+steelhead_season <- fish_month %>%
+  gg_season(y = monthly_mean_steelhead) +
+  labs(x = " ", y = "Steelhead") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+  # scale_fill_manual(values = c("#000000","#000001","#000002","#000003","#000004",
+  #                              "#000005","#000006","#000007","#000008","#000009"))
+  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
+
+coho_season <- fish_month %>%
+  gg_season(y = monthly_mean_coho) +
+  labs(x = " ", y = "Coho") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
+
+jack_coho_season <- fish_month %>%
+  gg_season(y = monthly_mean_jack_coho) +
+  labs(x = "Month", y = "Jack Coho") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
+
+# steelhead_final <- ggplotly(steelhead_season)
+# coho_final <- ggplotly(coho_season)
+# jack_coho_final <- ggplotly(jack_coho_season)
+
+steelhead_season/coho_season/jack_coho_season
 
 ```
 
+**Figure 2:** Season plots for steelhead, coho, and jack coho fish. The figures show the average number of each species of fish passing through the Willamette fish ladder per month for each year of data collected. 
 
-## Visualizaiton 3
+- Add 2 - 3 bullet points summarizing the major trends you see in the seasonplots.
+
+## Annual Total Fish Passage
 
 DELETE: A finalized figure of annual totals for fish passage, for each of the 3 species (coho, jack coho, steelhead). You decide if this is in a single panel, or multiple panels. Add a figure caption. 
 Add 2 - 3 bullet points summarizing major trends you see in the annual totals by species from 2000 - 2010.
 
 ```{r}
+fish_year <- fish_ts %>%
+  index_by(yearly = ~year(.)) %>%
+  summarize(annual_sum_steelhead = sum(steelhead, na.rm = TRUE),
+            annual_sum_coho = sum(coho, na.rm = TRUE),
+            annual_sum_jack_coho = sum(jack_coho, na.rm = TRUE))
 
+steelhead_year <- ggplot(data = fish_year, aes(x = yearly, y = annual_sum_steelhead)) +
+  geom_col(fill = "#80aaaa") +
+  labs(x = " ", y = "Steelhead") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+
+coho_year <- ggplot(data = fish_year, aes(x = yearly, y = annual_sum_coho)) +
+  geom_col(fill = "#c15db2") +
+  labs(x = " ", y = "Coho") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank())
+  # scale_color_gradient(low = "#d4ebf2", high = "#4e8ca5")
+
+jack_coho_year <- ggplot(data = fish_year, aes(x = yearly, y = annual_sum_jack_coho)) +
+  geom_col(fill = "#ff9900") +
+  labs(x = "Year", y = "Jack Coho") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(breaks = c(2001,2002,2003,2004,2005,2006,2007,2008,2009,2010))
+
+steelhead_year/coho_year/jack_coho_year
 ```
+
+**Figure 3:** Annnual total fish passage through the Willamette fish ladder by species. 
+
+- 2-3 bullets summarizing major trends in annual totals by species 
 
 # Conclusion
 
