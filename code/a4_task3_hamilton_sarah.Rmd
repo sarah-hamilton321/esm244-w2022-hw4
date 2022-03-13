@@ -1,0 +1,55 @@
+---
+title: "Text Analysis of _____"
+author: "Sarah Hamilton"
+date: "3/12/2022"
+output:
+  html_document:
+    code_folding: hide
+    theme: yeti
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    collapsed: yes
+    smooth_scroll: yes
+    number_sections: yes
+editor_options:
+  chunk_output_type: console
+---
+
+# Introduction
+
+In the following code, I perform a text analysis of President Joe Biden's State of the Union Address of 2022.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(pdftools)
+library(readtext)
+
+# sotu <- read.table(file = here("data","biden_sotu.txt"))
+sotu_raw <- readtext(file = here::here("data","biden_sotu.txt")) %>%
+  str_squish() %>% 
+  tolower() %>%
+  str_remove_all(pattern = "[[:punct:]]") 
+
+#make each word an observation
+sotu <- sotu_raw %>%
+  data.frame() %>%
+  mutate(word = str_split(., pattern = " ")) %>%
+  unnest(word) %>%
+  select(word) %>%
+  anti_join(stop_words, by = "word")
+
+  
+  
+
+
+  
+```
+
+
+
+**Data Source:** Full Transcript of Biden’s State of the Union Address. (2022). The New York Times. https://www.nytimes.com/2022/03/01/us/politics/biden-sotu-transcript.html
